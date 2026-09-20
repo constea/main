@@ -34,11 +34,6 @@ PAGE_STYLE:
   FOOTER = empty
   RIGHT_HEADER = page_number
 
-COLORS:
-  accent1 = HTML:C00000
-  accent2 = HTML:000066
-  accent3 = HTML:006600
-
 DOCUMENT_TITLE:
   MAKE_TITLE = false
   STYLE = \bfseries \LARGE
