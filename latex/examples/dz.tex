@@ -1,0 +1,44 @@
+\documentclass[dz]{petrovsky}
+\title{Производная сложной функции}
+\group{ИС-21}
+\docnumber{7}
+\deadline{03.10}
+
+\begin{document}
+\maketitle
+
+\begin{theorem}[Правило цепочки]
+Если $g$ дифференцируема в точке $x$, а $f$ — в точке $g(x)$, то
+\[ \bigl(f(g(x))\bigr)' = f'(g(x))\cdot g'(x). \]
+\end{theorem}
+
+\begin{task}[1 балл]
+Найдите производную функции $y = \sin(3x^2+1)$.
+\end{task}
+\begin{hint}
+Внешняя функция — $\sin u$, внутренняя — $u = 3x^2+1$.
+\end{hint}
+
+\begin{task}[2 балла]
+Вычислите $f'(0)$, если $f(x) = e^{2x}\cos x$.
+\end{task}
+
+\begin{task}[3 балла]
+Найдите производные:
+\begin{parts}
+  \item $y = \sqrt{1 + \ln^2 x}$;
+  \item $y = \operatorname{tg}^3(2x)$;
+  \item $y = \arcsin\dfrac{x}{2}$.
+\end{parts}
+\end{task}
+
+\section{Таблица производных}
+\begin{tabular}{@{}ll@{}}
+\toprule
+$f(x)$ & $f'(x)$ \\ \midrule
+$x^n$ & $n x^{n-1}$ \\
+$\sin x$ & $\cos x$ \\
+$e^x$ & $e^x$ \\
+$\ln x$ & $1/x$ \\ \bottomrule
+\end{tabular}
+\end{document}

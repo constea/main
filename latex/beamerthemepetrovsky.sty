@@ -1,0 +1,72 @@
+% petrovsky «Сетка» — тема Beamer 16:9.
+% \usetheme[board]{petrovsky} — чёрная, для проектора (по умолчанию)
+% \usetheme[paper]{petrovsky} — белая, для экрана ноутбука и печати
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{beamerthemepetrovsky}[2026/09/28 petrovsky beamer theme]
+\newif\ifpv@board \pv@boardtrue
+\DeclareOption{board}{\pv@boardtrue}
+\DeclareOption{paper}{\pv@boardfalse}
+\ProcessOptions\relax
+
+\RequirePackage{petrovsky-tokens}
+\RequirePackage{tikz}
+\ifpv@board\pvthemeboard\fi
+\usefonttheme{professionalfonts}
+
+\setbeamercolor{background canvas}{bg=pv-surface}
+\setbeamercolor{normal text}{fg=pv-text,bg=pv-surface}
+\setbeamercolor{structure}{fg=pv-accent}
+\setbeamercolor{frametitle}{fg=pv-text}
+\setbeamercolor{alerted text}{fg=pv-accent}
+\setbeamercolor{block title}{fg=pv-muted,bg=}
+\setbeamercolor{block body}{fg=pv-text,bg=}
+\setbeamercolor{muted}{fg=pv-muted}
+
+% сетка слайда: колонка индексов 12–30 мм, текст с 30 мм
+\setbeamersize{text margin left=30mm,text margin right=12mm}
+\setbeamertemplate{navigation symbols}{}
+
+% заголовок: линейка + метка (subtitle), название
+\setbeamertemplate{frametitle}{\vskip8mm
+  {\color{pv-strong}\rule{\linewidth}{0.4pt}}\par\vskip1.2mm
+  {\usebeamercolor[fg]{muted}\pvlabel{\insertframesubtitle}}\par\vskip5mm
+  {\bfseries\fontsize{18pt}{21pt}\selectfont\textls[-20]{\insertframetitle}}\par\vskip3mm}
+
+% подвал: монограмма в колонке, адрес и номер справа
+\setbeamertemplate{footline}{\leavevmode\hbox to\paperwidth{\hspace*{12mm}%
+  \hbox to 18mm{\usebeamercolor[fg]{normal text}\footnotesize\pvmonogram\hfill}%
+  {\usebeamercolor[fg]{muted}\sffamily\tiny math.petrovsky.online}\hfill
+  {\usebeamercolor[fg]{muted}\sffamily\tiny\insertframenumber\,/\,\inserttotalframenumber}\hspace*{12mm}}\vskip6mm}
+
+\setbeamertemplate{title page}{\vskip10mm
+  \hspace*{-18mm}\hbox to 18mm{\usebeamercolor[fg]{muted}\pvlabel{\insertdate}\hfill}%
+  {\color{pv-strong}\rule{\linewidth}{0.4pt}}\par\vskip1.2mm
+  {\usebeamercolor[fg]{muted}\pvlabel{\insertsubtitle}}\par\vfill
+  {\bfseries\fontsize{32pt}{34pt}\selectfont\textls[-40]{\inserttitle}\par}\vskip6mm
+  {\usebeamercolor[fg]{muted}\small\insertauthor\par}\vfill
+  {\Large\pvwordmark}\par\vskip8mm}
+
+% раздел: крупный красный номер в колонке
+\AtBeginSection{\begin{frame}[plain]\vfill
+  \hspace*{-18mm}\hbox to 18mm{\usebeamercolor[fg]{structure}\bfseries\fontsize{32pt}{34pt}\selectfont\two@digits{\insertsectionnumber}\hfill}%
+  {\bfseries\fontsize{32pt}{34pt}\selectfont\textls[-30]{\insertsectionhead}}\vfill\end{frame}}
+
+% блоки: светлая линейка + метка, без рамок
+\setbeamertemplate{block begin}{\par\vskip\medskipamount{\color{pv-rule}\rule{\linewidth}{0.3pt}}\par\vskip1mm
+  {\usebeamercolor[fg]{block title}\pvlabel{\insertblocktitle}}\par\vskip1.5mm\usebeamercolor[fg]{block body}}
+\setbeamertemplate{block end}{\par\vskip\medskipamount}
+\setbeamertemplate{block alerted begin}{\par\vskip\medskipamount{\color{pv-accent}\rule{\linewidth}{0.4pt}}\par\vskip1mm
+  {\color{pv-accent-text}\pvlabel{\insertblocktitle}}\par\vskip1.5mm}
+\setbeamertemplate{block alerted end}{\par\vskip\medskipamount}
+\setbeamertemplate{block example begin}{\par\vskip\medskipamount{\color{pv-correct}\rule{\linewidth}{0.4pt}}\par\vskip1mm
+  {\color{pv-correct}\pvlabel{\insertblocktitle}}\par\vskip1.5mm}
+\setbeamertemplate{block example end}{\par\vskip\medskipamount}
+
+\setbeamertemplate{itemize item}{\usebeamercolor[fg]{normal text}\rule[0.3em]{0.7em}{0.5pt}}
+\setbeamertemplate{itemize subitem}{\usebeamercolor[fg]{muted}\rule[0.3em]{0.5em}{0.4pt}}
+\setbeamertemplate{enumerate item}{\usebeamercolor[fg]{structure}\bfseries\insertenumlabel}
+
+\newenvironment{theorem}[1]{\begin{alertblock}{Теорема #1}}{\end{alertblock}}
+\newenvironment{task}[1]{\begin{block}{Задача #1}}{\end{block}}
+\newenvironment{answerblock}{\begin{exampleblock}{Ответ}}{\end{exampleblock}}
+\endinput

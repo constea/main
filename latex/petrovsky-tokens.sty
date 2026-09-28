@@ -1,0 +1,80 @@
+% petrovsky «Сетка» — токены для LaTeX (pdfLaTeX). Синхронизировано с tokens/tokens.json.
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{petrovsky-tokens}[2026/09/28 petrovsky design tokens]
+
+\newif\ifpv@mathtext \pv@mathtextfalse
+\DeclareOption{ptmath}{\pv@mathtexttrue}   % буквы формул из PT Serif вместо Computer Modern
+\ProcessOptions\relax
+
+\RequirePackage[T2A]{fontenc}
+\RequirePackage{xcolor}
+\RequirePackage{amsmath,amssymb}
+\RequirePackage{paratype}
+% формулы — Computer Modern, как KaTeX на сайте и в HTML-слайдах; [ptmath] — PT Serif Italic
+\ifpv@mathtext\RequirePackage[italic]{mathastext}\fi
+\renewcommand\familydefault{\sfdefault}
+\RequirePackage[letterspace=60]{microtype}
+
+% --- палитра ---
+\definecolor{pv-white}{HTML}{FFFFFF}
+\definecolor{pv-gray-50}{HTML}{F5F5F4}
+\definecolor{pv-gray-100}{HTML}{EDEDED}
+\definecolor{pv-gray-200}{HTML}{D9D9D9}
+\definecolor{pv-gray-600}{HTML}{6B6B6B}
+\definecolor{pv-black}{HTML}{111111}
+\definecolor{pv-red-500}{HTML}{E4402B}
+\definecolor{pv-red-700}{HTML}{C0301D}
+\definecolor{pv-green-700}{HTML}{1E7A46}
+\definecolor{pv-board-800}{HTML}{1B1B1B}
+\definecolor{pv-board-600}{HTML}{333333}
+\definecolor{pv-chalk-100}{HTML}{F2F2F2}
+\definecolor{pv-chalk-500}{HTML}{9A9A9A}
+\definecolor{pv-red-400}{HTML}{FF5A43}
+\definecolor{pv-green-400}{HTML}{5CC98A}
+
+% --- семантика: paper ---
+\colorlet{pv-surface}{pv-white}
+\colorlet{pv-sunken}{pv-gray-50}
+\colorlet{pv-text}{pv-black}
+\colorlet{pv-muted}{pv-gray-600}
+\colorlet{pv-grid}{pv-gray-100}
+\colorlet{pv-rule}{pv-gray-200}
+\colorlet{pv-strong}{pv-black}
+\colorlet{pv-accent}{pv-red-500}
+\colorlet{pv-accent-text}{pv-red-700}
+\colorlet{pv-correct}{pv-green-700}
+
+% --- семантика: board ---
+\newcommand\pvthemeboard{%
+  \colorlet{pv-surface}{pv-black}\colorlet{pv-sunken}{pv-board-800}%
+  \colorlet{pv-text}{pv-chalk-100}\colorlet{pv-muted}{pv-chalk-500}%
+  \colorlet{pv-grid}{pv-board-800}\colorlet{pv-rule}{pv-board-600}%
+  \colorlet{pv-strong}{pv-chalk-100}\colorlet{pv-accent}{pv-red-400}%
+  \colorlet{pv-accent-text}{pv-red-400}\colorlet{pv-correct}{pv-green-400}}
+
+% --- модуль и сетка A4 ---
+\newlength\pvunit       \setlength\pvunit{5mm}
+\newlength\pvindexwidth \setlength\pvindexwidth{20mm}  % колонка индексов: x = 15…35 мм
+\newlength\pvindexsep   \setlength\pvindexsep{5mm}     % до текста (x = 40 мм)
+\newlength\pvhair       \setlength\pvhair{0.3pt}
+\newlength\pvstrong     \setlength\pvstrong{0.5pt}
+
+% --- роли шрифта ---
+\newcommand\pvlabel[1]{{\sffamily\fontsize{7.5pt}{3.75mm}\selectfont\textls{\MakeUppercase{#1}}}}
+\newcommand\pvindexfont{\sffamily\bfseries\fontsize{14pt}{5mm}\selectfont}
+\newcommand\pvmetafont{\sffamily\fontsize{8.5pt}{3.75mm}\selectfont}
+
+% знак: petrovsky + красный квадрат на базовой линии (0.22 кегля)
+\newcommand\pvmark{\textcolor{pv-accent}{\rule{0.22em}{0.22em}}}
+\newcommand\pvwordmark{{\sffamily\bfseries\textls[-30]{petrovsky}\kern0.06em\pvmark}}
+\newcommand\pvmonogram{{\sffamily\bfseries p\kern0.05em\pvmark}}
+
+% содержимое в колонке индексов (слева от текста, по первой строке)
+\newcommand\pvindex[1]{\leavevmode\llap{\parbox[t]{\pvindexwidth}{\raggedright #1}\hspace{\pvindexsep}}}
+% линейка на всю сетку (колонка индексов + текст)
+% \pvfullrule — светлая волосяная; \pvfullrule[strong] — чёрная линия раздела
+\newcommand\pvfullrule[1][]{\par\noindent\hspace*{-\dimexpr\pvindexwidth+\pvindexsep\relax}%
+  \if\relax\detokenize{#1}\relax\def\pv@rc{pv-rule}\def\pv@rw{\pvhair}\else\def\pv@rc{pv-strong}\def\pv@rw{\pvstrong}\fi
+  \textcolor{\pv@rc}{\rule{\dimexpr\linewidth+\pvindexwidth+\pvindexsep\relax}{\pv@rw}}\par}
+
+\endinput

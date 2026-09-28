@@ -1,0 +1,50 @@
+\documentclass[aspectratio=169]{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage[T2A]{fontenc}
+\usepackage[russian]{babel}
+\usetheme[board]{petrovsky}   % [paper] — светлая
+\usepackage{pgfplots}\pgfplotsset{compat=1.18}
+
+\title{Производная сложной функции}
+\subtitle{Математика, лекция 4}
+\author{А. Петровский, ИС-21}
+\date{28.09}
+
+\begin{document}
+\begin{frame}\titlepage\end{frame}
+
+\section{Правило цепочки}
+
+\begin{frame}{Производная сложной функции}{Лекция 4}
+\begin{theorem}{4.2}
+Если $g$ дифференцируема в точке $x$, а $f$ — в точке $g(x)$, то
+\[ \bigl(f(g(x))\bigr)' = f'(g(x))\cdot g'(x) \]
+\end{theorem}
+\end{frame}
+
+\begin{frame}{Как меняется наклон}{График}
+\begin{tikzpicture}
+\begin{axis}[width=12cm,height=5.4cm,axis lines=middle,
+  axis line style={pv-muted},tick style={pv-muted},ticklabel style={font=\tiny,pv-muted},
+  xmin=-3.3,xmax=3.3,ymin=-1.4,ymax=1.4,samples=200,no markers]
+  \addplot[pv-text,line width=1pt,domain=-3.2:3.2]{sin(deg(x^2))};
+  \addplot[pv-accent,line width=1pt,domain=-3.2:3.2]{0.25*2*x*cos(deg(x^2))};
+\end{axis}
+\end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Найдите производную}{Задача}
+\begin{task}{1}
+$y = \sin(3x^2+1)$
+\end{task}
+\pause
+\begin{enumerate}
+\item внешняя: $\sin u \;\to\; \cos u$
+\item внутренняя: $u = 3x^2+1 \;\to\; u' = 6x$
+\end{enumerate}
+\pause
+\begin{answerblock}
+$y' = 6x\cos(3x^2+1)$
+\end{answerblock}
+\end{frame}
+\end{document}
