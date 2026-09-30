@@ -1,0 +1,903 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Лист — markdown с формулами</title>
+<meta name="description" content="Редактор markdown с предпросмотром, формулами LaTeX и выводом в A4 или адаптивный HTML.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link id="fonts-css" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=PT+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap">
+<link id="katex-css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link id="hljs-css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+
+<style>
+:root{
+  --desk:#e7eaee; --paper:#fff; --ink:#1c1f24; --muted:#6b717b; --rule:#dadee3;
+  --soft:#f3f5f7; --accent:#2f43c4; --accent-ink:#fff; --danger:#b42318;
+  --ui:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --split:50%;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font:14px/1.4 var(--ui);color:var(--ink);background:var(--paper);display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased}
+::selection{background:#dde3fb}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+svg.i{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- top bar ---------- */
+.bar{min-height:52px;display:flex;align-items:center;gap:10px;padding:0 12px 0 16px;border-bottom:1px solid var(--rule);flex:none;position:relative;z-index:10;background:var(--paper)}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;letter-spacing:-.01em;white-space:nowrap}
+.brand svg{width:22px;height:22px;color:var(--accent)}
+.brand small{font-weight:400;color:var(--muted);font-size:13px}
+.spacer{flex:1}
+.sep{width:1px;height:22px;background:var(--rule);flex:none}
+.btn{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 10px;border:1px solid transparent;border-radius:8px;background:none;font:inherit;font-size:13.5px;color:var(--ink);cursor:pointer;white-space:nowrap}
+.btn:hover{background:var(--soft);border-color:var(--rule)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);padding:0 12px}
+.btn.primary:hover{background:#2537a8;border-color:transparent}
+.seg{display:inline-flex;background:var(--soft);border:1px solid var(--rule);border-radius:9px;padding:2px;flex:none}
+.seg button{border:0;background:transparent;font:inherit;font-size:13px;padding:5px 12px;border-radius:7px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--paper);color:var(--ink);box-shadow:0 0 0 1px var(--rule),0 1px 2px rgba(20,30,50,.06)}
+.tabs{display:none}
+
+.menu-wrap{position:relative}
+.menu{position:absolute;right:0;top:calc(100% + 6px);min-width:290px;background:var(--paper);border:1px solid var(--rule);border-radius:10px;box-shadow:0 14px 36px rgba(20,30,50,.16);padding:6px;display:none;z-index:30}
+.menu.open{display:block}
+.menu button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;border:0;background:none;font:inherit;text-align:left;padding:8px 10px;border-radius:6px;cursor:pointer;color:var(--ink)}
+.menu button:hover,.menu button:focus-visible{background:var(--soft);outline:none}
+.menu small{color:var(--muted);font-size:12px}
+kbd{font:11px var(--mono);color:var(--muted);border:1px solid var(--rule);border-radius:4px;padding:0 4px;margin-left:6px}
+
+/* ---------- panes ---------- */
+main{flex:1;display:flex;min-height:0}
+.pane{display:flex;flex-direction:column;min-width:0;min-height:0}
+.pane.edit{width:var(--split);flex:none}
+.pane.view{flex:1;background:var(--desk)}
+.pane-head{height:34px;display:flex;align-items:center;gap:14px;padding:0 16px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--rule);background:var(--paper);flex:none;white-space:nowrap;overflow:hidden}
+.pane-head b{font-weight:500;color:var(--ink)}
+.pane-head .push{margin-left:auto}
+.err-btn{display:none;border:0;background:#fdecea;color:var(--danger);font:inherit;font-size:12px;padding:2px 8px;border-radius:5px;cursor:pointer}
+.err-btn.show{display:inline-block}
+.gutter{width:1px;background:var(--rule);position:relative;cursor:col-resize;flex:none;z-index:2}
+.gutter::after{content:"";position:absolute;top:0;bottom:0;left:-4px;right:-4px}
+.gutter:hover,.gutter.drag{background:var(--accent)}
+
+#src{flex:1;width:100%;resize:none;border:0;outline:none;margin:0;padding:22px 26px 45vh;font:13.5px/1.7 var(--mono);color:var(--ink);background:var(--paper);tab-size:4;caret-color:var(--accent);white-space:pre-wrap;overflow-wrap:anywhere}
+#src::placeholder{color:#a3a9b2}
+
+.scroll{flex:1;overflow:auto;position:relative;overscroll-behavior:contain}
+.stage{padding:28px 24px 72px;display:flex;justify-content:center;min-height:100%}
+.sheet-wrap{flex:none}
+.sheet{background:var(--paper);transform-origin:0 0;position:relative;box-shadow:0 1px 2px rgba(20,30,50,.07),0 10px 30px rgba(20,30,50,.08)}
+.fmt-a4 .sheet{width:210mm;padding:20mm 18mm}
+.fmt-fluid .pane.view{background:var(--paper)}
+.fmt-fluid .stage{display:block;padding:0}
+.fmt-fluid .sheet{box-shadow:none;padding:48px 32px 120px;min-height:100%}
+.marks{position:absolute;left:0;right:0;top:20mm;pointer-events:none}
+.fmt-fluid .marks{display:none}
+.mark{position:absolute;left:0;right:0;height:0;border-top:1px dashed #c4cad3}
+.mark.manual{border-top-style:solid;border-top-color:#b7c0f0}
+.mark span{position:absolute;right:5mm;top:-9px;font:500 11px/16px var(--ui);color:#8b929c;background:var(--paper);padding:0 5px;border-radius:3px}
+
+.toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,12px);background:var(--ink);color:#fff;font-size:13px;padding:9px 14px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:50;max-width:calc(100vw - 32px);text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.drop{position:fixed;inset:10px;border:2px dashed var(--accent);border-radius:14px;background:rgba(47,67,196,.06);display:none;align-items:center;justify-content:center;font-size:15px;color:var(--accent);z-index:60;pointer-events:none}
+body.dropping .drop{display:flex}
+.flash{animation:flash 1.2s ease-out}
+@keyframes flash{0%{box-shadow:0 0 0 4px rgba(180,35,24,.35)}100%{box-shadow:0 0 0 4px rgba(180,35,24,0)}}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}.flash{animation:none}}
+
+/* ---------- narrow screens ---------- */
+@media (max-width:1000px){ .brand small{display:none} }
+@media (max-width:860px){
+  .lbl{display:none}
+  .btn{padding:0 8px}
+  .tabs{display:inline-flex}
+  .gutter{display:none}
+  .pane.edit{width:100%}
+  body[data-view="edit"] .pane.view{display:none}
+  body[data-view="preview"] .pane.edit{display:none}
+  .stage{padding:16px 12px 56px}
+  .fmt-fluid .sheet{padding:28px 20px 96px}
+  #src{padding:18px 18px 45vh}
+}
+@media (max-width:560px){
+  .bar{flex-wrap:wrap;padding:8px 10px;row-gap:8px}
+  .brand .name{display:none}
+  .fmt-seg{order:5;flex:1}
+  .fmt-seg button{flex:1}
+}
+
+/* ---------- print: only the document ---------- */
+@media print{
+  html,body{height:auto;overflow:visible;display:block;background:none}
+  .bar,.pane.edit,.gutter,.pane-head,.marks,.toast,.drop{display:none!important}
+  main,.pane.view,.scroll,.stage{display:block!important;overflow:visible!important;padding:0!important;background:none!important;height:auto!important;min-height:0!important}
+  .sheet-wrap{width:auto!important;height:auto!important}
+  .sheet{transform:none!important;width:auto!important;padding:0!important;box-shadow:none!important;min-height:0!important}
+  .doc{min-height:0!important;max-width:none!important}
+}
+</style>
+
+<!-- Стили самого документа: используются и в предпросмотре, и в экспорте HTML -->
+<style id="doc-css">
+.doc{font-family:"PT Serif",Georgia,"Times New Roman",serif;color:#1b1d21;font-size:11pt;line-height:1.55;overflow-wrap:break-word;hyphens:auto;-webkit-hyphens:auto;position:relative;text-rendering:optimizeLegibility}
+.doc:not(.fluid) p{text-align:justify}
+.doc.fluid{font-size:1.125rem;line-height:1.62;max-width:44rem;margin:0 auto}
+.doc>:first-child{margin-top:0!important}
+.doc h1,.doc h2,.doc h3,.doc h4,.doc h5,.doc h6{font-weight:700;line-height:1.25;margin:1.5em 0 .55em;break-after:avoid;page-break-after:avoid;hyphens:manual;text-align:left}
+.doc h1{font-size:1.85em;letter-spacing:-.012em;margin-bottom:.6em}
+.doc h2{font-size:1.38em}
+.doc h3{font-size:1.14em}
+.doc h4,.doc h5,.doc h6{font-size:1em}
+.doc h5,.doc h6{font-style:italic;font-weight:400}
+.doc p{margin:0 0 .75em}
+.doc a{color:#2f43c4;text-decoration-thickness:1px;text-underline-offset:2px}
+.doc strong{font-weight:700}
+.doc ul,.doc ol{padding-left:1.5em;margin:0 0 .75em}
+.doc li{margin:.18em 0}
+.doc li>p{margin:0 0 .35em}
+.doc li>ul,.doc li>ol{margin:.15em 0 .2em}
+.doc li:has(>input[type=checkbox]),.doc li:has(>p>input[type=checkbox]){list-style:none}
+.doc li input[type=checkbox]{margin:0 .45em 0 -1.35em;vertical-align:-.1em;accent-color:#2f43c4}
+.doc blockquote{margin:0 0 .9em;padding:.05em 0 .05em 1em;border-left:2px solid #cfd5dc;color:#454b54}
+.doc blockquote>:last-child{margin-bottom:0}
+.doc code{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.84em;background:#f1f3f5;padding:.12em .32em;border-radius:3px;hyphens:none}
+.doc pre{background:#f6f7f9;border:1px solid #e4e7eb;border-radius:4px;padding:.75em 1em;margin:0 0 1em;font-size:.86em;line-height:1.5;overflow:auto;hyphens:none;text-align:left}
+.doc:not(.fluid) pre{white-space:pre-wrap;overflow-wrap:anywhere}
+.doc pre code,.doc pre code.hljs{background:transparent;padding:0;font-size:inherit;border-radius:0;overflow:visible;display:inline}
+.doc table{border-collapse:collapse;margin:.2em 0 1em;font-size:.95em;max-width:100%;border-top:1.5px solid #1b1d21;border-bottom:1.5px solid #1b1d21}
+.doc th,.doc td{padding:.36em .8em;vertical-align:top;hyphens:manual}
+.doc th:not([align]),.doc td:not([align]){text-align:left}
+.doc thead th{border-bottom:1px solid #1b1d21;font-weight:700}
+.doc tbody tr+tr td{border-top:1px solid #eceef1}
+.doc hr{border:0;border-top:1px solid #d6dae0;margin:1.6em 0}
+.doc img{max-width:100%;height:auto}
+.doc p>img:only-child{display:block;margin:.4em auto}
+.doc .katex{font-size:1.1em}
+.doc .nobr{white-space:nowrap}
+.doc .katex-display{margin:.85em 0;overflow-x:auto;overflow-y:hidden;padding:2px 0}
+.doc .katex-display>.katex{text-align:center}
+.doc .math-block{margin:0}
+.doc .math-err{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.82em;color:#b42318;background:#fdecea;border-radius:3px;padding:.1em .3em;white-space:pre-wrap}
+.doc div.math-err{display:block;margin:.6em 0 .9em;padding:.6em .8em;border-left:2px solid #b42318;border-radius:0 4px 4px 0}
+.doc div.math-err span{display:block;font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:.95em;margin-bottom:.35em}
+.doc a.eqref{text-decoration:none;color:inherit}
+.doc .ref-missing{color:#b42318}
+.doc .page-break{height:0;break-after:page;page-break-after:always}
+.doc.fluid .page-break{border-top:1px dashed #cfd5dc;margin:2em 0}
+@media print{
+  .doc.fluid{font-size:11pt;max-width:none}
+  .doc .math-block,.doc .katex-display,.doc img,.doc tr{break-inside:avoid;page-break-inside:avoid}
+  .doc pre{white-space:pre-wrap;overflow-wrap:anywhere}
+  .doc a{color:inherit}
+}
+</style>
+<style id="page-css">@page{size:A4;margin:20mm 18mm}</style>
+</head>
+
+<body class="fmt-a4" data-view="edit">
+<header class="bar">
+  <div class="brand" title="Лист">
+    <svg viewBox="0 0 24 24" class="i" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M14.5 11h-5l2.6 3-2.6 3h5"/></svg>
+    <span class="name">Лист</span><small>markdown и LaTeX</small>
+  </div>
+
+  <div class="seg tabs" role="group" aria-label="Режим">
+    <button type="button" data-view="edit" aria-pressed="true">Текст</button>
+    <button type="button" data-view="preview" aria-pressed="false">Лист</button>
+  </div>
+
+  <div class="spacer"></div>
+
+  <button class="btn" id="open-btn" type="button" title="Открыть файл .md (Ctrl+O)">
+    <svg viewBox="0 0 24 24" class="i" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span class="lbl">Открыть</span>
+  </button>
+  <button class="btn" id="paste-btn" type="button" title="Заменить документ текстом из буфера обмена">
+    <svg viewBox="0 0 24 24" class="i" aria-hidden="true"><rect x="8" y="3" width="8" height="4" rx="1"/><path d="M16 5h2a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2"/></svg><span class="lbl">Вставить</span>
+  </button>
+
+  <div class="sep"></div>
+
+  <div class="seg fmt-seg" role="group" aria-label="Выходной формат">
+    <button type="button" data-format="a4" aria-pressed="true" title="Лист A4 с полями, разбивка на страницы">A4</button>
+    <button type="button" data-format="fluid" aria-pressed="false" title="Ширина по экрану, для чтения с любого устройства">Адаптивный</button>
+  </div>
+
+  <div class="menu-wrap">
+    <button class="btn primary" id="export-btn" type="button" aria-haspopup="true" aria-expanded="false">
+      <svg viewBox="0 0 24 24" class="i" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span class="lbl">Скачать</span>
+    </button>
+    <div class="menu" id="export-menu" role="menu">
+      <button type="button" role="menuitem" data-export="pdf">PDF<small>Через печать, в выбранном формате</small></button>
+      <button type="button" role="menuitem" data-export="html">HTML<small>Отдельная страница, формулы сохранятся</small></button>
+      <button type="button" role="menuitem" data-export="md">Markdown<small>Исходный текст <kbd>Ctrl+S</kbd></small></button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <section class="pane edit" aria-label="Редактор">
+    <div class="pane-head"><b>Markdown</b><span class="push" id="stat-words"></span></div>
+    <textarea id="src" spellcheck="false" autocapitalize="off" autocomplete="off"
+      placeholder="Вставьте или напишите markdown. Формулы: $…$, $$…$$, \(…\), \[…\]"></textarea>
+  </section>
+  <div class="gutter" id="gutter" role="separator" aria-orientation="vertical" title="Потяните, чтобы изменить ширину. Двойной клик — поровну"></div>
+  <section class="pane view" aria-label="Предпросмотр">
+    <div class="pane-head"><b>Предпросмотр</b><span id="stat-pages"></span><span class="push" id="stat-math"></span><button class="err-btn" id="err-btn" type="button"></button></div>
+    <div class="scroll" id="preview">
+      <div class="stage">
+        <div class="sheet-wrap" id="sheet-wrap">
+          <div class="sheet" id="sheet">
+            <div class="marks" id="marks" aria-hidden="true"></div>
+            <article class="doc" id="doc" lang="ru"></article>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<input type="file" id="file" accept=".md,.markdown,.mdown,.txt,text/markdown,text/plain" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="drop">Отпустите файл, чтобы открыть</div>
+
+<script type="text/markdown" id="demo">
+# Пример документа
+
+Слева — markdown, справа — готовый лист. Формулы набираются как в LaTeX: строчные $e^{i\pi} + 1 = 0$ или в скобках \(\sum_{k=1}^{n} k = \tfrac{n(n+1)}{2}\), выносные — через `$$…$$`, `\[…\]` или окружения.
+
+## Выносные формулы
+
+\begin{equation}
+\int_{-\infty}^{\infty} e^{-x^2}\,dx = \sqrt{\pi}
+\label{eq:gauss}
+\end{equation}
+
+\[
+\mathbf{A} = \begin{pmatrix} a_{11} & a_{12} \\ a_{21} & a_{22} \end{pmatrix},
+\qquad \det \mathbf{A} = a_{11}a_{22} - a_{12}a_{21}
+\]
+
+\begin{align}
+\nabla \cdot \mathbf{E} &= \frac{\rho}{\varepsilon_0} \\
+\nabla \times \mathbf{B} &= \mu_0 \mathbf{J} + \mu_0 \varepsilon_0 \frac{\partial \mathbf{E}}{\partial t} \label{eq:ampere}
+\end{align}
+
+Нумерация и ссылки как в LaTeX: интеграл Пуассона \eqref{eq:gauss}, закон Ампера — Максвелла \eqref{eq:ampere}. Свои команды действуют во всём документе: $\newcommand{\R}{\mathbb{R}} f\colon \R^n \to \R$, а дальше просто $x \in \R$. Химия тоже: $\ce{2H2 + O2 -> 2H2O}$.
+
+## Таблица
+
+| Величина  | Обозначение | Единица       |
+|-----------|:-----------:|--------------:|
+| Скорость  | $v$         | м/с           |
+| Ускорение | $a$         | м/с$^2$       |
+| Сила      | $F = ma$    | Н             |
+
+## Код и текст
+
+```python
+def energy(m, c=299_792_458):
+    return m * c**2  # $E = mc^2$ внутри кода не компилируется
+```
+
+- [x] списки задач
+- [x] `$x$` в строчном коде остаётся текстом
+- [ ] цены вроде $5 и $10 не превращаются в формулы, а \$ экранируется
+
+> Команда `\newpage` на отдельной строке начинает новую страницу A4. Пунктир на листе показывает, где браузер разобьёт страницы при печати.
+
+\newpage
+
+## Как пользоваться
+
+1. **Вставить** заменяет документ текстом из буфера. Можно просто нажать Ctrl+V, пока курсор не в редакторе. Отменить — Ctrl+Z.
+2. Файл `.md` можно перетащить в окно, картинку — вставить прямо в текст.
+3. **Скачать → PDF** открывает печать: выберите «Сохранить как PDF», поля и формат уже заданы.
+4. Блоки ```` ```math ```` тоже рендерятся как формулы, как на GitHub.
+
+```math
+f(x) = \sum_{n=0}^{\infty} \frac{f^{(n)}(a)}{n!}(x-a)^n
+```
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/mhchem.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+<script>
+// ==CORE-START==
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+/* Компилятор: markdown (marked) + формулы (KaTeX).
+   Формулы вырезаются токенайзером marked до разбора разметки,
+   поэтому _ * \ внутри них не ломаются, а код остаётся кодом. */
+function createCompiler({ marked, katex, hljs }) {
+  const cache = new Map();
+  let macros = {}, useCache = true, stats = { math: 0, errors: 0 };
+
+  const refKey = k => k.trim().replace(/[^\w:.-]/g, '_');
+  const trust = ctx =>
+    (ctx.command === '\\htmlId' && ctx.id.startsWith('eqlbl-')) ||
+    (ctx.command === '\\htmlData' && Object.keys(ctx.attributes || {}).every(a => a === 'data-ref' || a === 'data-paren'));
+
+  function katexRender(src, display) {
+    // \label и \eqref KaTeX не знает: превращаем в метки, номера проставит resolveRefs
+    let s = src
+      .replace(/\\label\{([^{}]+)\}/g, (_, k) => `\\htmlId{eqlbl-${refKey(k)}}{}`)
+      .replace(/\\(eq)?ref\{([^{}]+)\}/g, (_, eq, k) => `\\htmlData{ref=${refKey(k)}, paren=${eq ? 1 : 0}}{\\text{${eq ? '(?)' : '?'}}}`);
+    const opts = { displayMode: display, throwOnError: true, strict: 'ignore', trust, macros, globalGroup: true, output: 'htmlAndMathml' };
+    for (let tries = 0; ; tries++) {
+      try { return katex.renderToString(s, opts); }
+      catch (e) {
+        // \newcommand для уже существующей команды (\R, \C…) в LaTeX-документах встречается часто
+        const m = /attempting to redefine (\\[A-Za-z]+|\\.)/.exec(e && e.message);
+        const fixed = m && s.split(`\\newcommand{${m[1]}}`).join(`\\renewcommand{${m[1]}}`)
+                            .split(`\\newcommand${m[1]}`).join(`\\renewcommand${m[1]}`);
+        if (!m || tries > 8 || fixed === s) throw e;
+        s = fixed;
+      }
+    }
+  }
+
+  function tex(src, display) {
+    stats.math++;
+    const key = (display ? 'D' : 'I') + src;
+    if (useCache && cache.has(key)) {
+      const hit = cache.get(key);
+      if (hit.err) stats.errors++;
+      return hit.html;
+    }
+    let html, err = false;
+    try {
+      html = katexRender(src, display);
+    } catch (e) {
+      err = true; stats.errors++;
+      const msg = String((e && e.message) || e).replace(/^KaTeX parse error:\s*/, '');
+      html = display
+        ? `<div class="math-err"><span>${escapeHtml(msg)}</span>${escapeHtml(src.trim())}</div>`
+        : `<code class="math-err" title="${escapeHtml(msg)}">${escapeHtml(src)}</code>`;
+    }
+    if (useCache) {
+      if (cache.size > 4000) cache.clear();
+      cache.set(key, { html, err });
+    }
+    return html;
+  }
+
+  // Номера формул: автоматические (.eqn-num, нумерует CSS-счётчик KaTeX) и явные \tag
+  function resolveRefs(root) {
+    const autoNums = new Map();
+    root.querySelectorAll('.katex-html .eqn-num').forEach((el, i) => autoNums.set(el, i + 1));
+    const labels = new Map();
+    root.querySelectorAll('[id^="eqlbl-"]').forEach(lbl => {
+      const disp = lbl.closest('.katex-display');
+      const tag = disp && disp.querySelector('.katex-html .tag');
+      if (!tag) return;
+      let cell = tag;
+      const rows = tag.querySelectorAll(':scope > .vlist-t > .vlist-r > .vlist > span');
+      if (rows.length) {
+        let top = null;
+        for (let el = lbl; el && el !== disp; el = el.parentElement) {
+          const p = el.parentElement;
+          if (p && p.classList.contains('vlist') && el.style.top) top = el.style.top;
+        }
+        cell = [...rows].find(r => r.style.top === top) || rows[0];
+      }
+      const num = cell.querySelector('.eqn-num');
+      const txt = cell.querySelector('.mord.text');
+      const val = num ? autoNums.get(num) : txt ? txt.textContent.trim().replace(/^\((.*)\)$/, '$1') : null;
+      if (val != null) labels.set(lbl.id.slice(6), String(val));
+    });
+    let missing = 0;
+    root.querySelectorAll('[data-ref]').forEach(el => {
+      const v = labels.get(el.dataset.ref);
+      if (v == null) missing++;
+      const t = v == null ? '??' : v;
+      el.textContent = el.dataset.paren === '1' ? `(${t})` : t;
+      el.classList.toggle('ref-missing', v == null);
+    });
+    return missing;
+  }
+
+  // без пустых строк внутри — незакрытая формула не съест полдокумента
+  const LINE = String.raw`(?:[^\n]|\n(?![ \t]*\n))`;
+  const RE_BLOCK_DOLLAR = new RegExp(String.raw`^ {0,3}\$\$((?:[^$\n]|\$(?!\$)|\n(?![ \t]*\n))+?)\$\$[ \t]*(?:\n+|$)`);
+  const RE_BLOCK_BRACKET = new RegExp(String.raw`^ {0,3}\\\[((?:\\[^\]]|[^\\\n]|\n(?![ \t]*\n))+?)\\\][ \t]*(?:\n+|$)`);
+  const RE_BLOCK_ENV = new RegExp(String.raw`^ {0,3}(\\begin\{([A-Za-z]+\*?)\}${LINE}*?\\end\{\2\})[ \t]*(?:\n+|$)`);
+  const RE_PAGEBREAK = /^ {0,3}\\(?:newpage|pagebreak|clearpage)[ \t]*(?:\n+|$)/;
+
+  const pageBreak = {
+    name: 'pageBreak', level: 'block',
+    start(src) { const m = /(^|\n) {0,3}\\(?:newpage|pagebreak|clearpage)\b/.exec(src); return m ? m.index + m[1].length : undefined; },
+    tokenizer(src) { const m = RE_PAGEBREAK.exec(src); if (m) return { type: 'pageBreak', raw: m[0] }; },
+    renderer() { return '<div class="page-break" aria-hidden="true"></div>\n'; }
+  };
+
+  const blockMath = {
+    name: 'blockMath', level: 'block',
+    start(src) { const m = /(^|\n) {0,3}(?:\$\$|\\\[|\\begin\{)/.exec(src); return m ? m.index + m[1].length : undefined; },
+    tokenizer(src) {
+      const m = RE_BLOCK_DOLLAR.exec(src) || RE_BLOCK_BRACKET.exec(src) || RE_BLOCK_ENV.exec(src);
+      if (m) return { type: 'blockMath', raw: m[0], text: m[1] };
+    },
+    renderer(t) { return `<div class="math-block">${tex(t.text, true)}</div>\n`; }
+  };
+
+  const inlineMath = {
+    name: 'inlineMath', level: 'inline',
+    start(src) { const i = src.search(/\\[$()[]|\$/); return i < 0 ? undefined : i; },
+    tokenizer(src) {
+      let m, display = false;
+      if ((m = /^\$\$((?:[^$]|\$(?!\$))+?)\$\$/.exec(src))) display = true;
+      else if ((m = /^\\\[((?:\\[^\]]|[^\\])+?)\\\]/.exec(src))) display = true;
+      else if (!(m = /^\\\(((?:\\[^)]|[^\\])+?)\\\)/.exec(src))
+        // $…$: после открывающего и перед закрывающим — не пробел, после закрывающего — не цифра
+        && !(m = /^\$(?![\s$])((?:\\[\s\S]|[^\\$])+?)(?<!\s)\$(?!\d)/.exec(src))) return;
+      // знак препинания сразу после строчной формулы не переносится на новую строку
+      const punct = display ? '' : (/^[.,;:!?…»)\]]+/.exec(src.slice(m[0].length)) || [''])[0];
+      return { type: 'inlineMath', raw: m[0] + punct, text: m[1], display, punct };
+    },
+    renderer(t) { const h = tex(t.text, t.display); return t.punct ? `<span class="nobr">${h}${escapeHtml(t.punct)}</span>` : h; }
+  };
+
+  const texRef = {
+    name: 'texRef', level: 'inline',
+    start(src) { const i = src.search(/\\(?:eq)?ref\{/); return i < 0 ? undefined : i; },
+    tokenizer(src) {
+      const m = /^\\(eq)?ref\{([^{}\n]+)\}/.exec(src);
+      if (m) return { type: 'texRef', raw: m[0], key: refKey(m[2]), paren: !!m[1] };
+    },
+    renderer(t) { return `<a class="eqref" href="#eqlbl-${escapeHtml(t.key)}" data-ref="${escapeHtml(t.key)}" data-paren="${t.paren ? 1 : 0}">${t.paren ? '(?)' : '?'}</a>`; }
+  };
+
+  const renderer = {
+    // совместимо с сигнатурами marked 12 (строки) и 13+ (токен)
+    code(a, b) {
+      const text = typeof a === 'object' ? a.text : a;
+      const info = (typeof a === 'object' ? a.lang : b) || '';
+      const lang = info.trim().split(/\s+/)[0].toLowerCase();
+      if (lang === 'math') return `<div class="math-block">${tex(text, true)}</div>\n`;
+      let body = null;
+      if (lang && hljs && hljs.getLanguage(lang)) {
+        try { body = hljs.highlight(text, { language: lang, ignoreIllegals: true }).value; } catch (e) { body = null; }
+      }
+      if (body == null) body = escapeHtml(text);
+      return `<pre><code class="hljs${lang ? ' language-' + escapeHtml(lang) : ''}">${body}</code></pre>\n`;
+    }
+  };
+
+  const md = new marked.Marked({ gfm: true, breaks: false });
+  md.use({ extensions: [pageBreak, blockMath, inlineMath, texRef], renderer });
+
+  return {
+    compile(src) {
+      macros = {};
+      stats = { math: 0, errors: 0 };
+      // документы с собственными макросами рендерим без кэша: результат зависит от порядка
+      useCache = !/\\(?:re)?newcommand|\\def\b|\\gdef|\\edef|\\xdef|\\let\b|\\global/.test(src);
+      const html = md.parse(src);
+      return { html, stats: { ...stats } };
+    },
+    resolveRefs
+  };
+}
+// ==CORE-END==
+
+(() => {
+  'use strict';
+  const $ = s => document.querySelector(s);
+  const ta = $('#src'), doc = $('#doc'), sheet = $('#sheet'), wrap = $('#sheet-wrap');
+  const preview = $('#preview'), marks = $('#marks'), toastEl = $('#toast');
+  const pageCss = $('#page-css'), fileInput = $('#file');
+  const menu = $('#export-menu'), exportBtn = $('#export-btn');
+
+  if (!window.marked || !window.katex) {
+    doc.innerHTML = '<p>Не удалось загрузить библиотеки с cdnjs.cloudflare.com. Проверьте подключение и обновите страницу.</p>';
+    return;
+  }
+
+  const compiler = createCompiler({ marked: window.marked, katex: window.katex, hljs: window.hljs });
+
+  const MM = 96 / 25.4;
+  const PAGE = { w: 210, h: 297, mx: 18, my: 20 };
+  const SHEET_W = PAGE.w * MM;
+  const BODY_H = (PAGE.h - 2 * PAGE.my) * MM;
+
+  let format = 'a4', lastMs = 0, timer = 0, dirty = false, pages = 1, stats = { math: 0, errors: 0 };
+  let fileName = 'document.md';
+
+  const plural = (n, one, few, many) => {
+    const a = n % 10, b = n % 100;
+    return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many;
+  };
+  const fmtN = n => n.toLocaleString('ru-RU');
+
+  /* ---------- render ---------- */
+  function render() {
+    const t0 = performance.now();
+    const res = compiler.compile(ta.value);
+    doc.innerHTML = res.html;
+    stats = res.stats;
+    stats.refs = compiler.resolveRefs(doc);
+    lastMs = performance.now() - t0;
+    layout();
+    updateStats();
+  }
+
+  function schedule(immediate) {
+    clearTimeout(timer);
+    const delay = immediate ? 0 : lastMs < 16 ? 25 : Math.min(600, lastMs * 2 + 60);
+    timer = setTimeout(render, delay);
+  }
+
+  /* ---------- A4: масштаб и разбивка на страницы ---------- */
+  function paginate() {
+    const breaks = [];
+    let start = 0, prev = null, prevTop = 0;
+    for (const el of doc.children) {
+      const top = el.offsetTop, h = el.offsetHeight, bottom = top + h;
+      if (el.classList.contains('page-break')) {
+        breaks.push({ y: top, manual: true });
+        start = bottom; prev = null;
+        continue;
+      }
+      if (bottom - start > BODY_H + 1) {
+        if (top > start + 1 && h <= BODY_H) {
+          // заголовок не остаётся внизу страницы в одиночестве
+          const y = prev && /^H[1-6]$/.test(prev.tagName) && prevTop > start + 1 ? prevTop : top;
+          breaks.push({ y }); start = y;
+        }
+        while (bottom - start > BODY_H + 1) { start += BODY_H; breaks.push({ y: start }); }
+      }
+      prev = el; prevTop = top;
+    }
+    pages = breaks.length + 1;
+    doc.style.minHeight = Math.ceil(start + BODY_H) + 'px';
+    marks.innerHTML = breaks.map((b, i) =>
+      `<div class="mark${b.manual ? ' manual' : ''}" style="top:${b.y}px"><span>${i + 2}</span></div>`).join('');
+  }
+
+  function fitSheet() {
+    if (format !== 'a4') {
+      sheet.style.transform = ''; wrap.style.width = ''; wrap.style.height = '';
+      return;
+    }
+    const pad = window.innerWidth <= 860 ? 24 : 48;
+    const s = Math.min(1, (preview.clientWidth - pad) / SHEET_W);
+    sheet.style.transform = s < 0.999 ? `scale(${s})` : '';
+    wrap.style.width = SHEET_W * s + 'px';
+    wrap.style.height = sheet.offsetHeight * s + 'px';
+  }
+
+  function layout() {
+    if (format === 'a4') paginate();
+    else { marks.textContent = ''; doc.style.minHeight = ''; pages = 1; }
+    fitSheet();
+    $('#stat-pages').textContent = format === 'a4'
+      ? `A4, ${pages} ${plural(pages, 'страница', 'страницы', 'страниц')}` : 'по ширине экрана';
+  }
+
+  let rafQueued = false;
+  const ro = new ResizeObserver(() => {
+    if (rafQueued) return;
+    rafQueued = true;
+    requestAnimationFrame(() => { rafQueued = false; layout(); });
+  });
+  ro.observe(preview); ro.observe(doc);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+
+  /* ---------- статистика ---------- */
+  function updateStats() {
+    const plain = ta.value
+      .replace(/```[\s\S]*?```/g, ' ')
+      .replace(/\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\)|\$[^$\n]+\$/g, ' ');
+    const words = (plain.match(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu) || []).length;
+    $('#stat-words').textContent = `${fmtN(words)} ${plural(words, 'слово', 'слова', 'слов')}`;
+    $('#stat-math').textContent = stats.math ? `${fmtN(stats.math)} ${plural(stats.math, 'формула', 'формулы', 'формул')}` : '';
+    const eb = $('#err-btn');
+    eb.classList.toggle('show', stats.errors > 0);
+    eb.textContent = stats.errors ? `${stats.errors} ${plural(stats.errors, 'ошибка', 'ошибки', 'ошибок')} в формулах` : '';
+  }
+
+  $('#err-btn').addEventListener('click', () => {
+    const el = doc.querySelector('.math-err');
+    if (!el) return;
+    if (document.body.dataset.view === 'edit' && window.innerWidth <= 860) setView('preview');
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+  });
+
+  /* ---------- формат ---------- */
+  function setFormat(f) {
+    format = f;
+    document.body.classList.toggle('fmt-a4', f === 'a4');
+    document.body.classList.toggle('fmt-fluid', f !== 'a4');
+    doc.classList.toggle('fluid', f !== 'a4');
+    pageCss.textContent = f === 'a4' ? '@page{size:A4;margin:20mm 18mm}' : '@page{margin:16mm}';
+    document.querySelectorAll('[data-format]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.format === f)));
+    layout();
+  }
+  document.querySelectorAll('[data-format]').forEach(b => b.addEventListener('click', () => setFormat(b.dataset.format)));
+
+  function setView(v) {
+    document.body.dataset.view = v;
+    document.querySelectorAll('.tabs [data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
+    if (v === 'preview') requestAnimationFrame(layout);
+  }
+  document.querySelectorAll('.tabs [data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+
+  /* ---------- ввод и быстрая вставка ---------- */
+  let tabTraps = true;
+  ta.addEventListener('input', () => { dirty = true; schedule(false); });
+  ta.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { tabTraps = false; return; }
+    if (e.key === 'Tab' && tabTraps && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      e.preventDefault();
+      insertAtCursor(e.shiftKey ? '' : '  ');
+    }
+  });
+  ta.addEventListener('focus', () => { tabTraps = true; });
+
+  function insertAtCursor(text) {
+    ta.focus();
+    if (!document.execCommand('insertText', false, text)) {
+      ta.setRangeText(text, ta.selectionStart, ta.selectionEnd, 'end');
+      ta.dispatchEvent(new Event('input'));
+    }
+  }
+
+  function replaceAll(text, note) {
+    text = text.replace(/\r\n?/g, '\n');
+    ta.focus();
+    ta.select();
+    // insertText сохраняет историю: Ctrl+Z вернёт прежний текст
+    const ok = text.length < 300000 && document.execCommand('insertText', false, text);
+    if (!ok) ta.value = text;
+    ta.setSelectionRange(0, 0);
+    ta.scrollTop = 0; preview.scrollTop = 0;
+    dirty = true;
+    render();
+    if (window.innerWidth <= 860) setView('preview');
+    if (note) toast(note);
+  }
+
+  async function pasteFromClipboard() {
+    let text = null;
+    try { text = await navigator.clipboard.readText(); } catch (e) { text = null; }
+    if (text == null) {
+      ta.focus(); ta.select();
+      toast('Браузер не дал доступ к буферу. Нажмите Ctrl+V — текст заменит документ');
+      return;
+    }
+    if (!text.trim()) { toast('Буфер обмена пуст'); return; }
+    replaceAll(text, 'Документ заменён текстом из буфера. Ctrl+Z — вернуть');
+  }
+  $('#paste-btn').addEventListener('click', pasteFromClipboard);
+
+  // Вставка в редактор: картинки встраиваются, большие куски рендерятся сразу
+  ta.addEventListener('paste', e => {
+    const dt = e.clipboardData;
+    if (!dt) return;
+    const img = [...dt.files].find(f => f.type.startsWith('image/'));
+    if (img && !dt.getData('text/plain')) {
+      e.preventDefault();
+      readAsDataURL(img).then(url => insertAtCursor(`![](${url})`));
+      return;
+    }
+    if ((dt.getData('text/plain') || '').length > 2000) setTimeout(() => schedule(true), 0);
+  });
+
+  // Ctrl+V вне редактора заменяет весь документ
+  document.addEventListener('paste', e => {
+    if (e.target === ta || e.defaultPrevented) return;
+    const text = e.clipboardData && e.clipboardData.getData('text/plain');
+    if (!text || !text.trim()) return;
+    e.preventDefault();
+    replaceAll(text, 'Документ заменён. Ctrl+Z в редакторе — вернуть');
+  });
+
+  const readAsDataURL = f => new Promise((res, rej) => {
+    const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f);
+  });
+
+  /* ---------- файлы ---------- */
+  function openFile(f) {
+    if (!f) return;
+    if (f.type.startsWith('image/')) {
+      readAsDataURL(f).then(url => insertAtCursor(`![${f.name.replace(/\.[^.]+$/, '')}](${url})`));
+      return;
+    }
+    f.text().then(t => {
+      fileName = /\.(md|markdown|mdown)$/i.test(f.name) ? f.name : f.name.replace(/\.[^.]*$/, '') + '.md';
+      replaceAll(t, `Открыт ${f.name}`);
+      dirty = false;
+    });
+  }
+  $('#open-btn').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => { openFile(fileInput.files[0]); fileInput.value = ''; });
+
+  let dragDepth = 0;
+  window.addEventListener('dragenter', e => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) { dragDepth++; document.body.classList.add('dropping'); } });
+  window.addEventListener('dragleave', () => { dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) document.body.classList.remove('dropping'); });
+  window.addEventListener('dragover', e => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) e.preventDefault(); });
+  window.addEventListener('drop', e => {
+    dragDepth = 0; document.body.classList.remove('dropping');
+    const f = e.dataTransfer && e.dataTransfer.files[0];
+    if (f) { e.preventDefault(); openFile(f); }
+  });
+
+  function download(name, content, type) {
+    const url = URL.createObjectURL(new Blob([content], { type }));
+    const a = Object.assign(document.createElement('a'), { href: url, download: name });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  function docTitle() {
+    const h = doc.querySelector('h1, h2');
+    const t = h ? h.textContent.trim() : '';
+    return t || fileName.replace(/\.[^.]+$/, '') || 'Документ';
+  }
+  const safeName = s => s.replace(/[\\/:*?"<>|\u0000-\u001f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || 'document';
+
+  function saveMarkdown() {
+    const name = fileName !== 'document.md' ? fileName : safeName(docTitle()) + '.md';
+    download(name, ta.value, 'text/markdown;charset=utf-8');
+    dirty = false;
+    toast(`Сохранено: ${name}`);
+  }
+
+  function exportHTML() {
+    render();
+    const a4 = format === 'a4';
+    const title = docTitle();
+    const pageRules = a4 ? `
+body{margin:0;background:#e7eaee}
+.sheet{box-sizing:border-box;background:#fff;width:210mm;min-height:297mm;margin:32px auto;padding:20mm 18mm;box-shadow:0 1px 2px rgba(20,30,50,.07),0 10px 30px rgba(20,30,50,.08)}
+@media (max-width:230mm){body{background:#fff}.sheet{width:auto;min-height:0;margin:0;padding:28px 20px 64px;box-shadow:none}}
+@page{size:A4;margin:20mm 18mm}
+@media print{body{background:none}.sheet{width:auto;min-height:0;margin:0;padding:0;box-shadow:none}}` : `
+body{margin:0;background:#fff}
+.sheet{padding:56px 24px 96px}
+@page{margin:16mm}
+@media print{.sheet{padding:0}}`;
+    const html = `<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escapeHtml(title)}</title>
+<link rel="stylesheet" href="${$('#fonts-css').href}">
+<link rel="stylesheet" href="${$('#katex-css').href}">
+<link rel="stylesheet" href="${$('#hljs-css').href}">
+<style>
+${$('#doc-css').textContent.trim()}
+${pageRules.trim()}
+</style>
+</head>
+<body>
+<main class="sheet">
+<article class="doc${a4 ? '' : ' fluid'}" lang="ru">
+${doc.innerHTML.replace(/ style="min-height:[^"]*"/, '')}
+</article>
+</main>
+</body>
+</html>
+`;
+    const name = safeName(title) + (a4 ? '' : ' (адаптивный)') + '.html';
+    download(name, html, 'text/html;charset=utf-8');
+    toast(`Сохранено: ${name}`);
+  }
+
+  function exportPDF() {
+    render();
+    toast('В окне печати выберите «Сохранить как PDF»');
+    setTimeout(() => window.print(), 150);
+  }
+
+  let savedTitle = document.title;
+  window.addEventListener('beforeprint', () => { savedTitle = document.title; document.title = safeName(docTitle()); });
+  window.addEventListener('afterprint', () => { document.title = savedTitle; });
+
+  /* ---------- меню «Скачать» ---------- */
+  function toggleMenu(open) {
+    const o = open ?? !menu.classList.contains('open');
+    menu.classList.toggle('open', o);
+    exportBtn.setAttribute('aria-expanded', String(o));
+    if (o) menu.querySelector('button').focus();
+  }
+  exportBtn.addEventListener('click', e => { e.stopPropagation(); toggleMenu(); });
+  document.addEventListener('click', e => { if (!menu.contains(e.target)) toggleMenu(false); });
+  menu.addEventListener('keydown', e => {
+    const items = [...menu.querySelectorAll('button')];
+    const i = items.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+    if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+    if (e.key === 'Escape') { toggleMenu(false); exportBtn.focus(); }
+  });
+  menu.addEventListener('click', e => {
+    const b = e.target.closest('[data-export]');
+    if (!b) return;
+    toggleMenu(false);
+    ({ pdf: exportPDF, html: exportHTML, md: saveMarkdown })[b.dataset.export]();
+  });
+
+  /* ---------- горячие клавиши ---------- */
+  document.addEventListener('keydown', e => {
+    const mod = e.ctrlKey || e.metaKey;
+    if (!mod || e.altKey) return;
+    const k = e.key.toLowerCase();
+    if (k === 's' || k === 'ы') { e.preventDefault(); saveMarkdown(); }
+    else if (k === 'o' || k === 'щ') { e.preventDefault(); fileInput.click(); }
+    else if (k === 'p' || k === 'з') { e.preventDefault(); exportPDF(); }
+  });
+
+  /* ---------- синхронная прокрутка ---------- */
+  let lockBy = null, lockT = 0;
+  function sync(from, to) {
+    const now = performance.now();
+    if (lockBy && lockBy !== from && now - lockT < 120) return;
+    lockBy = from; lockT = now;
+    const r = from.scrollTop / Math.max(1, from.scrollHeight - from.clientHeight);
+    to.scrollTop = r * (to.scrollHeight - to.clientHeight);
+  }
+  ta.addEventListener('scroll', () => sync(ta, preview), { passive: true });
+  preview.addEventListener('scroll', () => sync(preview, ta), { passive: true });
+
+  /* ---------- разделитель панелей ---------- */
+  const gutter = $('#gutter'), mainEl = $('#main');
+  gutter.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    gutter.setPointerCapture(e.pointerId);
+    gutter.classList.add('drag');
+    const r = mainEl.getBoundingClientRect();
+    const move = ev => {
+      const p = Math.min(78, Math.max(22, (ev.clientX - r.left) / r.width * 100));
+      document.documentElement.style.setProperty('--split', p + '%');
+    };
+    const up = () => {
+      gutter.classList.remove('drag');
+      gutter.removeEventListener('pointermove', move);
+      gutter.removeEventListener('pointerup', up);
+    };
+    gutter.addEventListener('pointermove', move);
+    gutter.addEventListener('pointerup', up);
+  });
+  gutter.addEventListener('dblclick', () => document.documentElement.style.setProperty('--split', '50%'));
+
+  /* ---------- ссылки в предпросмотре открываются в новой вкладке ---------- */
+  doc.addEventListener('click', e => {
+    const a = e.target.closest('a[href]');
+    if (!a) return;
+    const href = a.getAttribute('href');
+    if (href.startsWith('#')) return;
+    e.preventDefault();
+    window.open(a.href, '_blank', 'noopener');
+  });
+
+  /* ---------- прочее ---------- */
+  let toastTimer = 0;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2600);
+  }
+
+  window.addEventListener('beforeunload', e => {
+    if (dirty && ta.value.trim()) { e.preventDefault(); e.returnValue = ''; }
+  });
+
+  ta.value = $('#demo').textContent.replace(/^\n/, '');
+  render();
+})();
+</script>
+</body>
+</html>
