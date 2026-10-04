@@ -3,7 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Лист — markdown с формулами</title>
+<title>Σ markdown — редактор с формулами</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><circle cx='256' cy='256' r='256' fill='%231659EC'/><path fill='%23fff' d='M82.2 413.2H394.8L421.7 315.3V311.2H410C387.9 344.6 360.8 356.1 327.9 356.1H225.4L318.6 255.4L222.5 137.1H325.7C371.2 137.1 375.5 150.2 381 170.7H387.6L416 89.5V86.8H91.6V91.8L216.9 254.1L82.2 409.7Z'/></svg>">
+<meta name="theme-color" content="#1659EC">
 <meta name="description" content="Редактор markdown с предпросмотром, формулами LaTeX и выводом в A4 или адаптивный HTML.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,7 +16,7 @@
 <style>
 :root{
   --desk:#e7eaee; --paper:#fff; --ink:#1c1f24; --muted:#6b717b; --rule:#dadee3;
-  --soft:#f3f5f7; --accent:#2f43c4; --accent-ink:#fff; --danger:#b42318;
+  --soft:#f3f5f7; --accent:#1659EC; --accent-ink:#fff; --danger:#b42318;
   --ui:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --mono:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --split:50%;
@@ -22,21 +24,21 @@
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
 body{font:14px/1.4 var(--ui);color:var(--ink);background:var(--paper);display:flex;flex-direction:column;overflow:hidden;-webkit-font-smoothing:antialiased}
-::selection{background:#dde3fb}
+::selection{background:#d6e2fd}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 svg.i{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 
 /* ---------- top bar ---------- */
 .bar{min-height:52px;display:flex;align-items:center;gap:10px;padding:0 12px 0 16px;border-bottom:1px solid var(--rule);flex:none;position:relative;z-index:10;background:var(--paper)}
-.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;letter-spacing:-.01em;white-space:nowrap}
-.brand svg{width:22px;height:22px;color:var(--accent)}
-.brand small{font-weight:400;color:var(--muted);font-size:13px}
+.brand{display:flex;align-items:center;flex:none}
+.brand svg{display:block;height:30px;width:auto}
+.logo-mark{display:none!important}
 .spacer{flex:1}
 .sep{width:1px;height:22px;background:var(--rule);flex:none}
 .btn{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 10px;border:1px solid transparent;border-radius:8px;background:none;font:inherit;font-size:13.5px;color:var(--ink);cursor:pointer;white-space:nowrap}
 .btn:hover{background:var(--soft);border-color:var(--rule)}
 .btn.primary{background:var(--accent);color:var(--accent-ink);padding:0 12px}
-.btn.primary:hover{background:#2537a8;border-color:transparent}
+.btn.primary:hover{background:#0f47c7;border-color:transparent}
 .seg{display:inline-flex;background:var(--soft);border:1px solid var(--rule);border-radius:9px;padding:2px;flex:none}
 .seg button{border:0;background:transparent;font:inherit;font-size:13px;padding:5px 12px;border-radius:7px;color:var(--muted);cursor:pointer;white-space:nowrap}
 .seg button:hover{color:var(--ink)}
@@ -79,19 +81,18 @@ main{flex:1;display:flex;min-height:0}
 .marks{position:absolute;left:0;right:0;top:20mm;pointer-events:none}
 .fmt-fluid .marks{display:none}
 .mark{position:absolute;left:0;right:0;height:0;border-top:1px dashed #c4cad3}
-.mark.manual{border-top-style:solid;border-top-color:#b7c0f0}
+.mark.manual{border-top-style:solid;border-top-color:#a9c2f8}
 .mark span{position:absolute;right:5mm;top:-9px;font:500 11px/16px var(--ui);color:#8b929c;background:var(--paper);padding:0 5px;border-radius:3px}
 
 .toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,12px);background:var(--ink);color:#fff;font-size:13px;padding:9px 14px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:50;max-width:calc(100vw - 32px);text-align:center}
 .toast.show{opacity:1;transform:translate(-50%,0)}
-.drop{position:fixed;inset:10px;border:2px dashed var(--accent);border-radius:14px;background:rgba(47,67,196,.06);display:none;align-items:center;justify-content:center;font-size:15px;color:var(--accent);z-index:60;pointer-events:none}
+.drop{position:fixed;inset:10px;border:2px dashed var(--accent);border-radius:14px;background:rgba(22,89,236,.06);display:none;align-items:center;justify-content:center;font-size:15px;color:var(--accent);z-index:60;pointer-events:none}
 body.dropping .drop{display:flex}
 .flash{animation:flash 1.2s ease-out}
 @keyframes flash{0%{box-shadow:0 0 0 4px rgba(180,35,24,.35)}100%{box-shadow:0 0 0 4px rgba(180,35,24,0)}}
 @media (prefers-reduced-motion:reduce){.toast{transition:none}.flash{animation:none}}
 
 /* ---------- narrow screens ---------- */
-@media (max-width:1000px){ .brand small{display:none} }
 @media (max-width:860px){
   .lbl{display:none}
   .btn{padding:0 8px}
@@ -106,7 +107,8 @@ body.dropping .drop{display:flex}
 }
 @media (max-width:560px){
   .bar{flex-wrap:wrap;padding:8px 10px;row-gap:8px}
-  .brand .name{display:none}
+  .logo-full{display:none!important}
+  .logo-mark{display:block!important;height:32px}
   .fmt-seg{order:5;flex:1}
   .fmt-seg button{flex:1}
 }
@@ -135,14 +137,14 @@ body.dropping .drop{display:flex}
 .doc h4,.doc h5,.doc h6{font-size:1em}
 .doc h5,.doc h6{font-style:italic;font-weight:400}
 .doc p{margin:0 0 .75em}
-.doc a{color:#2f43c4;text-decoration-thickness:1px;text-underline-offset:2px}
+.doc a{color:#1659EC;text-decoration-thickness:1px;text-underline-offset:2px}
 .doc strong{font-weight:700}
 .doc ul,.doc ol{padding-left:1.5em;margin:0 0 .75em}
 .doc li{margin:.18em 0}
 .doc li>p{margin:0 0 .35em}
 .doc li>ul,.doc li>ol{margin:.15em 0 .2em}
 .doc li:has(>input[type=checkbox]),.doc li:has(>p>input[type=checkbox]){list-style:none}
-.doc li input[type=checkbox]{margin:0 .45em 0 -1.35em;vertical-align:-.1em;accent-color:#2f43c4}
+.doc li input[type=checkbox]{margin:0 .45em 0 -1.35em;vertical-align:-.1em;accent-color:#1659EC}
 .doc blockquote{margin:0 0 .9em;padding:.05em 0 .05em 1em;border-left:2px solid #cfd5dc;color:#454b54}
 .doc blockquote>:last-child{margin-bottom:0}
 .doc code{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.84em;background:#f1f3f5;padding:.12em .32em;border-radius:3px;hyphens:none}
@@ -181,9 +183,9 @@ body.dropping .drop{display:flex}
 
 <body class="fmt-a4" data-view="edit">
 <header class="bar">
-  <div class="brand" title="Лист">
-    <svg viewBox="0 0 24 24" class="i" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M14.5 11h-5l2.6 3-2.6 3h5"/></svg>
-    <span class="name">Лист</span><small>markdown и LaTeX</small>
+  <div class="brand" role="img" aria-label="Σ markdown">
+    <svg class="logo-full" viewBox="0 0 2089 512" aria-hidden="true"><rect width="2089" height="512" rx="256" fill="#1659EC"/><path fill="#fff" d="M82.2 413.2H394.8L421.7 315.3V311.2H410C387.9 344.6 360.8 356.1 327.9 356.1H225.4L318.6 255.4L222.5 137.1H325.7C371.2 137.1 375.5 150.2 381 170.7H387.6L416 89.5V86.8H91.6V91.8L216.9 254.1L82.2 409.7Z"/><path fill="#fff" d="M485.7 357.5H529.6V258.5C529.6 238.9 541.5 228 557 228C572 228 582.5 238.3 582.5 254.2V357.5H625V256.7C625 239.6 635.3 228 652 228C666.8 228 677.9 237 677.9 255.4V357.5H722V247.1C722 211.5 699.7 191.3 669.7 191.3C647.1 191.3 626.3 202.8 617.1 228C609.5 203.1 595.9 191.3 574.9 191.3C555.3 191.3 537 201.7 528.2 225.5L526.4 193.8H485.7ZM805.2 360.7C829.4 360.7 845.2 350 853.1 334.8H854.5V357.5H896.1V247.2C896.1 207.5 861.9 191.7 826.7 191.7C790.1 191.7 763.7 208 755.4 236.4L795.7 243.1C799.2 232.6 809.6 224.2 826.6 224.2C843 224.2 852.2 232.1 852.2 246V246.8C852.2 257.5 840.6 258.6 812.5 261.4C780.3 264.5 750.7 275 750.7 311.7C750.7 344 774 360.7 805.2 360.7ZM817.6 329.8C803.1 329.8 792.9 323.2 792.9 310.5C792.9 297.3 803.7 291 820 288.7C829.6 287.4 847.1 285 852.5 281.2V298.9C852.5 316.2 838.1 329.8 817.6 329.8ZM933.6 357.5H977.6V264.4C977.6 244 992.4 230.1 1012.6 230.1C1019 230.1 1027.7 231.1 1031.6 232.3V193C1027.7 192.1 1022 191.6 1017.4 191.6C999 191.6 983.9 202.1 977.9 222.3H976.1V193.8H933.6ZM1055.8 357.5H1099.8V304.9L1112.4 290.7L1158.1 357.5H1209.8L1145.5 264.8L1206.7 193.8H1155.9L1102.3 256.7H1099.8V139.3H1055.8ZM1289.8 360.3C1316.4 360.3 1330 344.5 1336 331.3H1338.2V357.5H1381.5V139.3H1337.5V221.3H1336C1330.2 208.3 1317.3 191.7 1289.5 191.7C1253.1 191.7 1223 220 1223 275.9C1223 330.4 1252 360.3 1289.8 360.3ZM1303.2 325C1280.4 325 1268.1 304.6 1268.1 275.8C1268.1 247.1 1280.1 226.9 1303.2 226.9C1325.8 226.9 1338.4 246 1338.4 275.8C1338.4 305.4 1325.6 325 1303.2 325ZM1492.2 360.7C1541.4 360.7 1572.3 326.8 1572.3 276.4C1572.3 225.7 1541.4 191.7 1492.2 191.7C1442.8 191.7 1412.1 225.7 1412.1 276.4C1412.1 326.8 1442.8 360.7 1492.2 360.7ZM1492.2 326.2C1468.8 326.2 1456.9 304.8 1456.9 276.2C1456.9 247.2 1468.8 226.3 1492.2 226.3C1515.6 226.3 1527.6 247.4 1527.6 276.2C1527.6 304.8 1515.6 326.2 1492.2 326.2ZM1637.1 357.5H1681.7L1699.9 294.4C1703.9 280.6 1707.7 261.9 1711.5 244.6C1715.3 261.7 1719.1 280.5 1723.2 294.4L1741.4 357.5H1786L1834.7 193.8H1787.9L1773.7 254.2C1769.5 272.9 1764.9 293.5 1760.7 317.7C1756 293.4 1750.7 272.7 1746.6 254.2L1732 193.8H1691.6L1676.6 254.2C1672.2 272.9 1667 293.7 1662.4 317.5C1658 293.2 1653 272.6 1649.1 254.2L1634.9 193.8H1588.7ZM1901.9 262.7C1901.9 241.1 1914.9 228.5 1933.7 228.5C1952.2 228.5 1963.3 240.6 1963.3 261V357.5H2007.2V253.4C2007.2 215 1985 191.7 1951 191.7C1925.8 191.7 1909.2 204.7 1900 227.6L1899.4 193.8H1858V357.5H1901.9Z"/></svg>
+    <svg class="logo-mark" viewBox="0 0 512 512" aria-hidden="true"><circle cx="256" cy="256" r="256" fill="#1659EC"/><path fill="#fff" d="M82.2 413.2H394.8L421.7 315.3V311.2H410C387.9 344.6 360.8 356.1 327.9 356.1H225.4L318.6 255.4L222.5 137.1H325.7C371.2 137.1 375.5 150.2 381 170.7H387.6L416 89.5V86.8H91.6V91.8L216.9 254.1L82.2 409.7Z"/></svg>
   </div>
 
   <div class="seg tabs" role="group" aria-label="Режим">
