@@ -1,5 +1,5 @@
 <role>
-Ты преподаватель, которой верстает тестирование по заданной теме. Результат: один готовый к компиляции .tex файл (pdfLaTeX), и скомпилированный документ .pdf файл. 15 листов А4 альбомной ориентации, на каждом две стороны с разными вариантами, всего 30 вариантов.
+Ты преподаватель, которой верстает тестирование по заданной теме. Результат: один готовый к компиляции .tex файл (pdfLaTeX), и скомпилированный документ .pdf файл. 30 вариантов, страница А5 на вариант (страница N = вариант N). Тот же файл без правок даёт тест по два варианта на листе А4 и маску проверки: её печатают поверх написанных работ.
 </role>
 
 <input>
@@ -7,7 +7,7 @@
 </input>
 
 <output>
-Только полный текст .tex в одном блоке кода, без пояснений до и после. Ответы отдельно не выдавай: ключ уже встроен в шаблон и выключен (\keyfalse), преподаватель включит его сам (\keytrue, добавится 16-я страница).
+Только полный текст .tex в одном блоке кода, без пояснений до и после. Ответы отдельно не выдавай: ключ уже встроен в шаблон и выключен (\keyfalse), преподаватель включит его сам (\keytrue, добавится страница с ключом). Маска строится из того же ключа автоматически.
 </output>
 
 <test_structure>
@@ -17,49 +17,101 @@
 <rules>
 1. Для каждого из 10 заданий придумай 4 версии (номера 1-4). Версии одного задания проверяют один навык, формулируются одинаково, равны по сложности и отличаются только числами или объектами.
 2. Сложность растёт от задания 1 к 10: задания 1-7 от базового уровня к среднему, 8-10 повышенные, 10-е комбинирует навыки темы.
-3. Задания 1-7: неверные ответы строй на типичных ошибках учеников. Ответы короткие (до 25 мм), четыре помещаются в одну строку. В четырёх версиях одного задания верный ответ стоит под разными буквами: каждая из А, Б, В, Г встречается ровно один раз.
-4. Задания 8-10: ответ короткий (число, простая дробь, краткое выражение), помещается в линию 40 мм.
+3. Задания 1-7: неверные ответы строй на типичных ошибках учеников. Ответы короткие (до 22 мм), четыре помещаются в одну строку. В четырёх версиях одного задания верный ответ стоит под разными буквами: каждая из А, Б, В, Г встречается ровно один раз.
+4. Задания 8-10: ответ короткий (число, простая дробь, краткое выражение), помещается в линию 40 мм. Этот же ответ печатается в маске после слова «верно:», поэтому в \Ans он записан так, как его должен написать ученик.
 5. Условие занимает не более двух строк. Каждую из 40 версий реши сам и перепроверь. Ответ единственный.
 6. Аргументы \ch набираются в математическом режиме, текст в них оборачивай в \text{...}. Десятичная запятая: 0{,}04.
 7. Не используй символы U+00B7, U+22C5 и U+2022. Умножение в формулах пиши только как \cdot.
 8. Новые пакеты не добавляй, кроме случаев, когда тема невозможна без них (например, mhchem). Только стандартные TeX Live.
-9. В шаблоне меняются ровно три вещи: тема (<<ТЕМА>>), блок \Task..., блок \Ans.... Всё остальное копируй без изменений, включая 30 строк цифр: они не зависят от темы, равномерны (каждая цифра на каждой позиции встречается 7 или 8 раз) и различны.
+9. В шаблоне меняются ровно три вещи: тема (<<ТЕМА>>), блок \Task..., блок \Ans.... Всё остальное копируй без изменений, включая механизм маски (\choices, \chmark, \chkcell, \answerline, \runtask, цвета testc и maskc, переключатели \ifmask и \iftwoup) и 30 строк цифр: они не зависят от темы, равномерны (каждая цифра на каждой позиции встречается 7 или 8 раз) и различны.
 10. Комментарии со словом «аналогично» раскрой в полные команды, в итоговый файл они не попадают. Имена команд: \Taski ... \Taskx и \Ansi ... \Ansx (римские цифры строчными). В \Ans для заданий 1-7 буквы идут в порядке версий 1-4 и совпадают с позицией верного ответа в \ch этой версии. Для заданий 8-10 в \Ans стоят значения в $...$.
 </rules>
 
 <self_check>
-Перед выдачей проверь: определено ровно 10 команд \Task и 10 команд \Ans по 4 ветки; в каждом \ch ровно 4 аргумента; скобки сбалансированы, у каждого \ifcase есть \fi; буквы в \Ans совпадают с пересчитанными заново верными ответами; в каждом закрытом задании буквы четырёх версий различны; файл начинается с \documentclass, заканчивается \end{document}, по умолчанию \keyfalse.
+Перед выдачей проверь: определено ровно 10 команд \Task и 10 команд \Ans по 4 ветки; в каждом \ch ровно 4 аргумента; скобки сбалансированы, у каждого \ifcase есть \fi; буквы в \Ans совпадают с пересчитанными заново верными ответами; в каждом закрытом задании буквы четырёх версий различны; файл начинается с \documentclass, заканчивается \end{document}, по умолчанию \keyfalse, \maskfalse и \twoupfalse.
 </self_check>
 
 <template>
 % Тема: <<ТЕМА>>
-% Компиляция: pdfLaTeX
-% Ключ для преподавателя: замените \keyfalse на \keytrue (добавится 16-я страница)
+% Компиляция: pdfLaTeX. Один файл даёт три PDF:
+%   тест А5 (страница N = вариант N):  pdflatex test.tex
+%   тест по 2 варианта на листе А4:    pdflatex -jobname=test-a4 "\def\TWOUP{}\input{test}"
+%   маска для допечатки поверх работ:  pdflatex -jobname=mask "\def\MASK{}\input{test}"
+% Ключ для преподавателя: замените \keyfalse на \keytrue (добавится страница с ключом)
 \documentclass[11pt]{article}
 \usepackage[T2A]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage[russian]{babel}
 \usepackage{amsmath,amssymb}
 \usepackage{array,xcolor,xstring}
-\usepackage[a4paper,landscape,margin=8mm,nohead,nofoot]{geometry}
 
 \newif\ifkey
 \keyfalse
+\newif\ifmask
+\maskfalse
+\newif\iftwoup
+\twoupfalse
+\ifdefined\MASK\masktrue\fi
+\ifdefined\TWOUP\twouptrue\fi
+\ifmask\twoupfalse\keyfalse\fi
+
+\iftwoup
+  \usepackage[a4paper,landscape,margin=0pt,nohead,nofoot]{geometry}
+\else
+  \usepackage[a5paper,margin=0pt,nohead,nofoot]{geometry}
+\fi
+
+% Вёрстка в обоих режимах одна и та же, меняются только цвета:
+% в тесте не видна маска, в маске не виден тест.
+\ifmask
+  \colorlet{testc}{white}\colorlet{maskc}{black}
+\else
+  \colorlet{testc}{black}\colorlet{maskc}{white}
+\fi
 
 \pagestyle{empty}
 \setlength{\parindent}{0pt}
-\newlength{\sidew}\setlength{\sidew}{135mm}
+\newlength{\halfw}\setlength{\halfw}{148mm}
+\newlength{\sidew}\setlength{\sidew}{134mm}
+\newlength{\sideh}\setlength{\sideh}{196mm}
+\newlength{\chkw}\setlength{\chkw}{14mm}
+\newlength{\taskw}\setlength{\taskw}{\dimexpr\sidew-\chkw\relax}
 
 \newcommand{\tnum}[1]{\textbf{#1.}\ }
 
-\newcommand{\ch}[4]{\par\nopagebreak\hspace*{1.4em}%
-  \makebox[0.225\linewidth][l]{\textbf{А)}\,$#1$}%
-  \makebox[0.225\linewidth][l]{\textbf{Б)}\,$#2$}%
-  \makebox[0.225\linewidth][l]{\textbf{В)}\,$#3$}%
-  \makebox[0.225\linewidth][l]{\textbf{Г)}\,$#4$}\par}
+% позиция верного ответа (1-4) для текущего задания и версии
+\def\curpos{0}
+\newcommand{\setcurpos}{\def\curpos{0}%
+  \ifnum\curtask<8
+    \IfStrEqCase{\csname Ans\romannumeral\curtask\endcsname{\tmpv}}%
+      {{А}{\def\curpos{1}}{Б}{\def\curpos{2}}{В}{\def\curpos{3}}{Г}{\def\curpos{4}}}%
+      [\def\curpos{0}]%
+  \fi}
+
+% рамка маски вокруг буквы верного ответа (нулевой ширины, вёрстку не сдвигает)
+\newcommand{\chmark}[1]{\ifnum\curpos=#1\relax
+  \makebox[0pt][l]{\kern-1.5mm{\color{maskc}\setlength{\fboxsep}{0pt}%
+    \setlength{\fboxrule}{0.8pt}%
+    \fbox{\rule[-2mm]{0pt}{6.4mm}\hspace{\dimexpr0.225\linewidth-2.5mm\relax}}}}\fi}
+
+% babel-russian сам определяет \ch (гип. косинус) в \begin{document},
+% поэтому макрос вариантов зовётся \choices и подставляется вместо \ch после него
+\newcommand{\choices}[4]{\par\nopagebreak\hspace*{1.4em}%
+  \makebox[0.225\linewidth][l]{\chmark{1}\textbf{А)}\,$#1$}%
+  \makebox[0.225\linewidth][l]{\chmark{2}\textbf{Б)}\,$#2$}%
+  \makebox[0.225\linewidth][l]{\chmark{3}\textbf{В)}\,$#3$}%
+  \makebox[0.225\linewidth][l]{\chmark{4}\textbf{Г)}\,$#4$}\par}
+\AtBeginDocument{\let\ch\choices}
 
 \newcommand{\answerline}{\par\vspace{1.2mm}\hspace*{1.4em}%
-  \textbf{Ответ:}\ \rule[-0.7mm]{40mm}{0.4pt}\par}
+  \textbf{Ответ:}\ \rule[-0.7mm]{40mm}{0.4pt}%
+  \hfill{\color{maskc}\textbf{верно:}\ \csname Ans\romannumeral\curtask\endcsname{\tmpv}}\par}
+
+% клетка учителя справа: в маске буква верного ответа (1-7) и квадрат для + или -
+\newcommand{\chkcell}{{\color{maskc}%
+  \ifnum\curtask<8 \textbf{\large\csname Ans\romannumeral\curtask\endcsname{\tmpv}}\ \fi
+  \setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.6pt}%
+  \fbox{\rule[-1.8mm]{0pt}{6.5mm}\hspace{6.5mm}}}}
 
 %%%%%%%%%% ЗАДАНИЯ (заменить) %%%%%%%%%%
 \newcommand{\Taski}[1]{\tnum{1}<<ФОРМУЛИРОВКА>> \ifcase#1\relax\or
@@ -75,19 +127,24 @@
 
 %%%%%%%%%% КОНЕЦ ЗАДАНИЙ %%%%%%%%%%
 
-\newcommand{\runtask}[2]{\StrChar{#2}{#1}[\tmpv]%
-  \csname Task\romannumeral#1\endcsname{\tmpv}\par\vspace{0.8mm plus 1fill}}
+\newcommand{\runtask}[2]{\StrChar{#2}{#1}[\tmpv]\def\curtask{#1}\setcurpos
+  \begin{minipage}[b]{\taskw}\raggedright
+  \csname Task\romannumeral#1\endcsname{\tmpv}%
+  \end{minipage}%
+  \makebox[\chkw][r]{\chkcell}\par\vspace{0.8mm plus 1fill}}
 
 \newcommand{\side}[2]{%
-\begin{minipage}[t][\textheight][t]{\sidew}
-\raggedright
+\begin{minipage}[t][\sideh][t]{\sidew}
+\color{testc}\raggedright
 {\large\textbf{Тест «<<ТЕМА>>»}}\hfill\textbf{Вариант #1}\par
 \vspace{2.5mm}
 Фамилия, имя\ \hrulefill\par
 \vspace{2mm}
-Группа\ \rule[-0.6mm]{30mm}{0.4pt}\par
+Группа\ \rule[-0.6mm]{30mm}{0.4pt}\hfill
+  {\color{maskc}\setlength{\fboxsep}{1.2mm}\fbox{\textbf{маска: вариант #1}}}\par
 \vspace{2mm plus 0.5fill}
-\textbf{Задания 1--7.} Выберите один верный ответ из предложенных.\par
+\textbf{Задания 1--7.} Выберите один верный ответ из предложенных.\hfill
+  {\tiny\itshape учитель}\par
 \vspace{1mm plus 0.5fill}
 \runtask{1}{#2}\runtask{2}{#2}\runtask{3}{#2}\runtask{4}{#2}%
 \runtask{5}{#2}\runtask{6}{#2}\runtask{7}{#2}%
@@ -112,12 +169,20 @@
 \end{minipage}
 \end{minipage}}
 
+\newcommand{\halfpage}[2]{\hbox to\halfw{\hss\side{#1}{#2}\hss}}
+
+\iftwoup
 \newcommand{\sheet}[4]{%
-  \vbox to \textheight{%
-    \hbox to \textwidth{%
-      \side{#1}{#2}\hfill{\color{gray}\vrule width 0.3pt}\hfill\side{#3}{#4}}%
+  \vbox to\textheight{\vss
+    \hbox to\textwidth{\halfpage{#1}{#2}\hss{\color{lightgray}\vrule width 0.2pt}\hss
+      \halfpage{#3}{#4}}%
     \vss}%
   \newpage}
+\else
+\newcommand{\sheet}[4]{%
+  \vbox to\textheight{\vss\halfpage{#1}{#2}\vss}\newpage
+  \vbox to\textheight{\vss\halfpage{#3}{#4}\vss}\newpage}
+\fi
 
 %%%%%%%%%% КЛЮЧ (заменить \Ans...) %%%%%%%%%%
 \newcommand{\Ansi}[1]{\ifcase#1\relax\or <<буква 1>>\or <<буква 2>>\or <<буква 3>>\or <<буква 4>>\fi}
@@ -152,10 +217,11 @@
 \sheet{29}{1132234141}{30}{4323323322}
 
 \ifkey
+\vbox to\textheight{\vss\hbox to\textwidth{\hss\begin{minipage}{\sidew}
 \begin{center}\textbf{\large Ключ: тест «<<ТЕМА>>»}\end{center}
 \vspace{-2mm}
-\begingroup\footnotesize\centering
-\renewcommand{\arraystretch}{1.2}
+\begingroup\scriptsize\centering
+\renewcommand{\arraystretch}{1.2}\setlength{\tabcolsep}{3pt}
 \begin{tabular}{|c|*{10}{c|}}\hline
 \textbf{Вар.} & \textbf{1} & \textbf{2} & \textbf{3} & \textbf{4} & \textbf{5} &
 \textbf{6} & \textbf{7} & \textbf{8} & \textbf{9} & \textbf{10}\\\hline\hline
@@ -171,6 +237,7 @@
 \keyrow{28}{2441412434}\keyrow{29}{1132234141}\keyrow{30}{4323323322}
 \end{tabular}
 \endgroup
+\end{minipage}\hss}\vss}
 \fi
 
 \end{document}
